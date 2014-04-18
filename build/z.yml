@@ -1,0 +1,38 @@
+build:
+    # Directory to build in
+    dir:            build
+
+# Build targets (environments)
+envs: ~
+
+# Whenever 'development' is mentioned, that is considered the local environment
+local_env: '"development"'
+
+# Available default tasks. All tasks prefixed with '_' are considered 'private',
+# i.e. they are not published in the command line help / list commands.
+tasks:
+    # Creates a build
+    build:
+        help: |
+            Creates a build for the specified environment
+        args:
+            target_env:     ? local_env
+            build.version:  ? vcs.current
+        pre: @_vcs.build
+        yield: tasks._vcs.build
+
+    # create a tar from the build
+    package:
+        help: |
+            Create a package (tar.gz) of the build dir
+        set:
+            package_file: ?
+            package_exclude_file: ?
+            target_env: ?
+        pre: @build
+        do:
+            - |
+                cd $(build.dir) && tar zcf \
+                    ../$(package_file) . \
+                    $(package_exclude_file ? sprintf("--exclude-from=../%s", package_exclude_file)) \
+            - echo "Package $(package_file) created"
