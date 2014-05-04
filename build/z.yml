@@ -1,12 +1,8 @@
+# @version ">=2.0"
+
 build:
     # Directory to build in
-    dir:            build
-
-# Build targets (environments)
-envs: ~
-
-# Whenever 'development' is mentioned, that is considered the local environment
-local_env: '"development"'
+    dir:            ./build
 
 # Available default tasks. All tasks prefixed with '_' are considered 'private',
 # i.e. they are not published in the command line help / list commands.
@@ -18,14 +14,18 @@ tasks:
         args:
             target_env:     ? local_env
             build.version:  ? vcs.current
-        pre: @_vcs.build
+        flags:
+            clean: false
+        pre:
+            - ?(clean) rm -rf $(build.dir)
+            - @_vcs.build
         yield: tasks._vcs.build
 
     # create a tar from the build
     package:
         help: |
             Create a package (tar.gz) of the build dir
-        set:
+        args:
             package_file: ?
             package_exclude_file: ?
             target_env: ?
