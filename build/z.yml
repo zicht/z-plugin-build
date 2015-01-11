@@ -17,7 +17,7 @@ tasks:
         flags:
             clean: false
         pre:
-            - ?(clean) rm -rf $(build.dir)
+            - @(if clean) rm -rf $(build.dir)
             - @_vcs.build
         yield: tasks._vcs.build
 
