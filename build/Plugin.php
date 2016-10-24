@@ -5,10 +5,10 @@
  */
 namespace Zicht\Tool\Plugin\Build;
 
-use \Zicht\Tool\Plugin as BasePlugin;
-use \Zicht\Tool\Container\ContainerBuilder;
-use \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use \Zicht\Tool\Container\Container;
+use Zicht\Tool\Plugin as BasePlugin;
+use Zicht\Tool\Container\ContainerBuilder;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Zicht\Tool\Container\Container;
 
 class Plugin extends BasePlugin
 {
