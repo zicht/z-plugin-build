@@ -21,6 +21,7 @@ class Plugin extends BasePlugin
                         ->scalarNode('dir')->end()
                     ->end()
                 ->end()
+                ->variableNode('setup')->end()
             ->end()
         ;
     }

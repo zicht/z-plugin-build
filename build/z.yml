@@ -4,35 +4,104 @@ build:
     # Directory to build in
     dir:            ./build
 
-# Available default tasks. All tasks prefixed with '_' are considered 'private',
-# i.e. they are not published in the command line help / list commands.
+setup:
+    js:
+        src: htmldev/src
+        target: web/js
+        command: tsc --project .
+    css:
+        src: htmldev/sass
+        target: web/css
+        command: zsass update %s %s
+    php:
+        command: composer install
+
 tasks:
-    # Creates a build
-    build:
-        help: |
-            Creates a build for the specified environment
+    _node_modules:
+        unless: !is_file("./package.json") || is_dir("./node_modules/.bin")
+        do: npm install
+        yield: cat(cwd, "/node_modules")
+
+    _bower:
+        unless: !is_file("./bower.json")
+        do: $(tasks._node_modules)/.bin/bower install
+        yield: cat(cwd, "web/vendor")
+
+    _compiler.css:
+        yield: cat(tasks._node_modules, "/.bin/", setup.css.command)
+
+    _compiler.js:
+        yield: cat(tasks._node_modules, "/.bin/", setup.js.command)
+
+    _setup.php: APPLICATION_ENV=$(target_env) composer install
+
+    _setup.css:
+        pre:
+            - @(if !is_dir("web/css")) mkdir -p "web/css"
+            - @_setup.css_prerequisites
+        do: $(sprintf(tasks._compiler.css, setup.css.src, setup.css.target))
+        post: @_setup.postprocess.css
+
+    _setup.js:
+        pre:
+            - @(if !is_dir("web/js")) mkdir -p "web/js"
+            - @_setup.prerequisites.js
+        do: $(sprintf(tasks._compiler.js, setup.js.src, setup.js.target))
+        post: @_setup.postprocess.js
+
+    _setup.prerequisites.js: @_bower
+    _setup.postprocess.js: cd web && $(tasks._node_modules)/.bin/systemjs-bundle system.conf.js js/main.js js/main.min.js --minify
+
+    setup:
         args:
-            target_env:     ? local_env
-            build.version:  ? vcs.current
+            parts[]: ? keys(setup)
+        opts:
+            target_env: '"development"'
         flags:
             clean: false
         pre:
-            - @(if clean) rm -rf $(build.dir)
-            - @_vcs.build
-        yield: tasks._vcs.build
-
-    # create a tar from the build
-    package:
-        help: |
-            Create a package (tar.gz) of the build dir
-        args:
-            package_file: ?
-            package_exclude_file: ?
-            target_env: ?
-        pre: @build
+            - @(if clean) rm -rf node_modules web/vendor vendor web/css web/js
         do:
-            - |
-                cd $(build.dir) && tar zcf \
-                    ../$(package_file) . \
-                    $(package_exclude_file ? sprintf("--exclude-from=../%s", package_exclude_file)) \
-            - echo "Package $(package_file) created"
+            - @(for subtask in parts) $(tasks._setup[subtask])
+            - symlinks -cr .
+
+    build:
+        args:
+            target_env: ?
+            version: ? vcs.current
+        set:
+            _dir: tasks._vcs.checkout
+        do: cd $(_dir) && $(z.cmd) setup --target-env=$(target_env)
+        yield: _dir
+
+
+    _setup.prerequisites.css: @_bower
+    _setup.postprocess.css: $(tasks._node_modules)/.bin/postcss --use autoprefixer --replace web/css/*.css
+
+    _vcs.checkout:
+        flags:
+            clean: true
+        args:
+            version: ?
+        set:
+            _dir: path(build.dir, version)
+        pre:
+            - @(if clean) rm -rf $(_dir)
+        do:
+            - @(if !is_dir(_dir)) git clone . $(_dir)
+            - cd $(_dir) && git log HEAD -1 > $(vcs.export.revfile)
+        yield: _dir
+
+
+    sass.update:
+        set:
+            continue: confirm(sprintf("The sass.update command is deprecated. Please use 'z setup css'. Continue anyway?"))
+        do:
+            - @(if continue) $(z.cmd) setup css
+
+    js.update:
+        set:
+            continue: confirm(sprintf("The js.update command is deprecated. Please use 'z setup js'. Continue anyway?"))
+        do: @(if continue) $(z.cmd) setup js
+
+    js.build: @js.update
