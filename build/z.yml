@@ -63,6 +63,7 @@ tasks:
             - @(if clean) rm -rf node_modules web/vendor vendor web/css web/js
         do:
             - @(for subtask in parts) $(tasks._setup[subtask])
+        post:
             - symlinks -cr .
 
     build:
@@ -71,7 +72,7 @@ tasks:
             version: ? vcs.current
         set:
             _dir: tasks._vcs.checkout
-        do: cd $(_dir) && $(z.cmd) setup --target-env=$(target_env)
+        do: cd $(_dir) && composer install && $(z.cmd) setup --target-env=$(target_env)
         yield: _dir
 
 
@@ -84,7 +85,7 @@ tasks:
         args:
             version: ?
         set:
-            _dir: path(build.dir, version)
+            _dir: build.dir
         pre:
             - @(if clean) rm -rf $(_dir)
         do:
@@ -92,10 +93,9 @@ tasks:
             - cd $(_dir) && git log HEAD -1 > $(vcs.export.revfile)
         yield: _dir
 
-
     sass.update:
         set:
-            continue: confirm(sprintf("The sass.update command is deprecated. Please use 'z setup css'. Continue anyway?"))
+            continue: confirm(sprintf("The sass.update command is deprecated. Please use 'z setup css'. Continue anyway?"), true)
         do:
             - @(if continue) $(z.cmd) setup css
 
