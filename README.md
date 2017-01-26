@@ -5,4 +5,4 @@ preparation for synchronization (using rsync or lftp plugins) or packaging it
 as a zip file.
 
 # Maintainer(s)
-* Gerard van Helden <gerard@zicht.nl>
+* Oskar van Velden <oskar@zicht.nl>
