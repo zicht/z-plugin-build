@@ -72,9 +72,20 @@ tasks:
             version: ? vcs.current
         set:
             _dir: tasks._vcs.checkout
-        do: cd $(_dir) && composer install && $(z.cmd) setup --target-env=$(target_env)
+        pre:
+            - echo -e "\n \033\e[95m Checking remote status with 'z vcs.remote.status'. No currently released branches with 'Ahead' > 0 ?\n\e[0m"
+            - @vcs.remote.status
+            - echo -e "\n \033\e[95m Have a look at our best practices https://github.com/zicht/decorum/tree/master/process/deployment \n\e[0m"
+            - |
+                cd $(_dir) && REMOTE_VERSION=`$(z.cmd) env:version $(target_env)` && CONTAINS=`git log --pretty=format:"%H" | grep "$REMOTE_VERSION"` &&
+                    if [ -n "$CONTAINS" ];
+                        then echo -e "\n$CONTAINS is the commit on '$(target_env)' and this seems to be in your branch. All good.\n";
+                    else
+                        echo -e "\n\e[41m The commit $CONTAINS is currently deployed on '$(target_env)' but seems to be missing in what you are deploying. A double-check might be a good idea.\e[0m\n"
+                    fi
+        do:
+            - cd $(_dir) && composer install && $(z.cmd) setup --target-env=$(target_env)
         yield: _dir
-
 
     _setup.prerequisites.css: @_bower
     _setup.postprocess.css: $(tasks._node_modules)/.bin/postcss --use autoprefixer --replace web/css/*.css
