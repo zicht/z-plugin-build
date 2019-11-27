@@ -18,7 +18,19 @@ tasks:
             clean: false
         pre:
             - @(if clean) rm -rf $(build.dir)
+            - echo -e "\n \033\e[95m Checking remote status with 'z vcs.remote.status'. No currently released branches with 'Ahead' > 0 ?\n\e[0m"
+            - @vcs.remote.status
+            - echo -e "\n \033\e[95m Have a look at our best practices https://github.com/zicht/decorum/tree/master/process/deployment \n\e[0m"
             - @_vcs.build
+            - |
+                cd $(build.dir)
+                REMOTE_VERSION=`$(z.cmd) env:version $(target_env)` && CONTAINS=`git log -q --pretty=format:"%H" | grep "$REMOTE_VERSION"`
+                if [ "$CONTAINS" ];
+                    then echo -e "\n$REMOTE_VERSION is the commit on '$(target_env)' and this seems to be in your branch. All good.\n";
+                else
+                    echo -e "\n\e[41m The commit $REMOTE_VERSION is currently deployed on '$(target_env)' but seems to be missing in what you are deploying. A double-check might be a good idea.\e[0m\n"
+                    sleep 2
+                fi
         yield: tasks._vcs.build
 
     # create a tar from the build
