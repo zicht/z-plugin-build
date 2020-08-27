@@ -2,7 +2,7 @@
 
 build:
     # Directory to build in
-    dir:            ./build
+    dir:            build
 
 # Available default tasks. All tasks prefixed with '_' are considered 'private',
 # i.e. they are not published in the command line help / list commands.
@@ -26,10 +26,10 @@ tasks:
                 cd $(build.dir)
                 REMOTE_VERSION=`$(z.cmd) env:version $(target_env)` && CONTAINS=`git log -q --pretty=format:"%H" | grep "$REMOTE_VERSION" || true`
                 if [ "$CONTAINS" ]; then
-                    echo -e "\n$REMOTE_VERSION is the commit on '$(target_env)' and this seems to be in your branch. All good.\n";
+                    (echo -e "\n$REMOTE_VERSION is the commit on '$(target_env)' and this seems to be in your branch. All good.\n") 2> /dev/null
                 else
-                    echo -e "\n\e[41m The commit $REMOTE_VERSION is currently deployed on '$(target_env)' but seems to be missing in what you are deploying. A double-check might be a good idea.\e[0m\n"
-                    for i in 1 2 3 4 5; do sleep 1; echo -n "."; done; echo ""
+                    (echo -e "\n\e[41m The commit $REMOTE_VERSION is currently deployed on '$(target_env)' but seems to be missing in what you are deploying. A double-check might be a good idea.\e[0m\n") 2>/dev/null
+                    (for i in 1 2 3 4 5; do sleep 1; echo -n "."; done; echo "") 2> /dev/null
                 fi
         yield: tasks._vcs.build
 
