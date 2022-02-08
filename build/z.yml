@@ -17,9 +17,9 @@ tasks:
         flags:
             clean: false
         pre:
-            - @(if clean) rm -rf $(build.dir)
+            - '@(if clean) rm -rf $(build.dir)'
             - $(block(sprintf("Building %s...", vcs.description), "fg=white;bg=cyan;options=bold"))
-            - @_vcs.build
+            - '@_vcs.build'
         yield: tasks._vcs.build
 
     # create a tar from the build
@@ -30,7 +30,7 @@ tasks:
             package_file: ?
             package_exclude_file: ?
             target_env: ?
-        pre: @build
+        pre: '@build'
         do:
             - |
                 cd $(build.dir) && tar zcf \
